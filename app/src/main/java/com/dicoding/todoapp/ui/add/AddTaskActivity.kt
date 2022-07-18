@@ -5,20 +5,34 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProvider
 import com.dicoding.todoapp.R
+import com.dicoding.todoapp.data.Task
+import com.dicoding.todoapp.databinding.ActivityAddTaskBinding
+import com.dicoding.todoapp.databinding.ActivityTaskDetailBinding
+import com.dicoding.todoapp.ui.ViewModelFactory
+import com.dicoding.todoapp.ui.list.TaskViewModel
 import com.dicoding.todoapp.utils.DatePickerFragment
 import java.text.SimpleDateFormat
 import java.util.*
 
 class AddTaskActivity : AppCompatActivity(), DatePickerFragment.DialogDateListener {
     private var dueDateMillis: Long = System.currentTimeMillis()
+    private lateinit var binding : ActivityAddTaskBinding
+    private lateinit var viewModel : TaskViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_add_task)
+        binding = ActivityAddTaskBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
 
         supportActionBar?.title = getString(R.string.add_task)
+
+        val factory = ViewModelFactory.getInstance(this)
+        viewModel = ViewModelProvider(this, factory).get(TaskViewModel::class.java)
 
     }
 
@@ -31,6 +45,16 @@ class AddTaskActivity : AppCompatActivity(), DatePickerFragment.DialogDateListen
         return when (item.itemId) {
             R.id.action_save -> {
                 //TODO 12 : Create AddTaskViewModel and insert new task to database
+                val newTask = Task(
+                    0,
+                    binding.addEdTitle.text.toString(),
+                    binding.addEdDescription.text.toString(),
+                    dueDateMillis,
+                    false
+                )
+                val result = viewModel.insertTask(task = newTask)
+                Toast.makeText(applicationContext, "New task has been added", Toast.LENGTH_SHORT).show()
+                finish()
                 true
             }
             else -> super.onOptionsItemSelected(item)

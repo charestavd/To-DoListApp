@@ -1,8 +1,10 @@
 package com.dicoding.todoapp.data
 
 import android.content.Context
+import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.dicoding.todoapp.R
 import org.json.JSONArray
 import org.json.JSONException
@@ -10,8 +12,14 @@ import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
+import java.util.concurrent.Executors
 
 //TODO 3 : Define room database class and prepopulate database using JSON
+
+@Database(
+    entities = [Task::class],
+    version = 1
+)
 abstract class TaskDatabase : RoomDatabase() {
 
     abstract fun taskDao(): TaskDao
@@ -27,7 +35,19 @@ abstract class TaskDatabase : RoomDatabase() {
                     context.applicationContext,
                     TaskDatabase::class.java,
                     "task.db"
-                ).build()
+                ).fallbackToDestructiveMigration().addCallback(object : Callback(){
+                    override fun onCreate(db: SupportSQLiteDatabase) {
+                        INSTANCE?.let(
+                            fun(
+                                database: TaskDatabase
+                            ) {
+                            Executors.newSingleThreadScheduledExecutor().execute {
+                                fillWithStartingData(context.applicationContext, database.taskDao())
+                            }
+                        })
+                    }
+                })
+                    .build()
                 INSTANCE = instance
                 instance
             }
